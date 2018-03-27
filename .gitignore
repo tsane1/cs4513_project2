@@ -1,3 +1,7 @@
+# Executables
+dsh
+dsh_server
+
 # Prerequisites
 *.d
 
