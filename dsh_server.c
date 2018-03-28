@@ -13,6 +13,15 @@
 #include "dsh_shared.h"
 #include "util.h"
 
+/** Print the help and exit */
+void help(char* my_name) {
+	printf("--------------- CS 4513 Project 2 ---------------\n");
+	printf("Usage: %s [-h]\n", my_name);
+	printf("  -h Display this help and exit\n");
+	printf("-------------------------------------------------\n");
+	exit(EXIT_FAILURE);
+}
+
 /**
  * Set up the server and start listening for requests
  *
@@ -25,7 +34,6 @@ int setup_server() {
 	descr = try(socket(PF_INET, SOCK_STREAM, 0));
 	
 	/* Create the server information */
-	memset(&server, 0, sizeof(server));				// Clear server struct
 	server.sin_family = AF_INET;					// Internet / IP
 	server.sin_addr.s_addr = htonl(INADDR_ANY);		// Accept from any address
 	server.sin_port = htons(DSH_PORT);				// Listen on the predefined dsh port
@@ -42,7 +50,16 @@ int setup_server() {
 }
 
 /** MAIN */
-int main() {
+int main(int argc, char** argv) {
+	// Set up configuration from commandline flags
+	opterr = 0; char opt;
+	while((opt = getopt(argc, argv, "h")) != -1) {
+		switch(opt) {
+			case 'h': help(argv[0]); break;
+			case '?': warn("Ignoring unrecognized flag");
+		}
+	}
+	
 	int socket_descr = setup_server();
 	
 	struct sockaddr_in incoming; int incoming_len = sizeof(incoming);
@@ -55,5 +72,6 @@ int main() {
 		printf("Recieved %s from client!\n", buffer);
 	}
 	
+	close(socket_descr);
 	return EXIT_SUCCESS;
 }
