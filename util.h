@@ -17,12 +17,13 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <stdarg.h>
 
-#define dbg(msg)	log_base(0, msg, __FILE__, __LINE__)
-#define info(msg)	log_base(1, msg, __FILE__, __LINE__)
-#define warn(msg)	log_base(2, msg, __FILE__, __LINE__)
-#define err(msg)	log_base(3, msg, __FILE__, __LINE__)
-void log_base(int level, char* message, char* file, int line);
+#define dbg(...)	log_base(0, __FILE__, __LINE__, __VA_ARGS__)
+#define info(...)	log_base(1, __FILE__, __LINE__, __VA_ARGS__)
+#define warn(...)	log_base(2, __FILE__, __LINE__, __VA_ARGS__)
+#define err(...)	log_base(3, __FILE__, __LINE__, __VA_ARGS__)
+void log_base(int level, char* file, int line, char* message, ...);
 
 #define try(retval)	try_base(retval, __FILE__, __LINE__)
 int try_base(int retval, char* file, int line);

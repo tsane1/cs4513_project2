@@ -23,23 +23,25 @@ char* strlvl(int level) {
 }
 
 /** The base logging function for printing messages */
-void log_base(int level, char* message, char* file, int line) {
-	if(level > 1) {
-		fprintf(
-			(level < 3) ? stdout : stderr,
-			"[%s]: %s (%s:%d)\n",
-			strlvl(level), message, file, line
-		);
-		if(level > 2) exit(EXIT_FAILURE);
-	}
-	else {
-		printf("[%s]: %s\n", strlvl(level), message);
-	}
+void log_base(int level, char* file, int line, char* message, ...) {
+	// Print the level
+	fprintf(stderr, "[%s]: ", strlvl(level));
 	
+	// Print the message with variadic parameters
+	va_list args; va_start(args, message);
+	vfprintf(stderr, message, args);
+	va_end(args);
+	
+	// Print the file and line if this is a warning or error
+	if(level > 1) fprintf(stderr, " (%s:%d)", file, line);
+	fprintf(stderr, "\n");
+	
+	// Terinate on error
+	if(level > 2) exit(EXIT_FAILURE);
 }
 
 /** The base try function for failing out properly */
 int try_base(int retval, char* file, int line) {
-	if(retval < 0) log_base(3, strerror(errno), file, line);
+	if(retval < 0) log_base(3, file, line, strerror(errno));
 	else return retval;
 }

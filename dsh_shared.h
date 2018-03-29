@@ -16,10 +16,13 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+
+#define _XOPEN_SOURCE
 #include <unistd.h>
 
-#define DSH_PORT			8080
-#define MAX_CONNECTIONS		10
-#define BUFF_SIZE			256
+#define DSH_PORT				4513
+#define MAX_CONNECTIONS			10
+#define BUFF_SIZE				256
+#define DSH_DEFAULT_USERNAME	"grader"
 
 #endif

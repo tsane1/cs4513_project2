@@ -15,10 +15,12 @@
 
 /** Print the help and exit */
 void help(char* my_name) {
-	printf("--------------- CS 4513 Project 2 ---------------\n");
-	printf("Usage: %s [-h]\n", my_name);
+	printf("----------------- CS 4513 Project 2 -----------------\n");
+	printf("Usage: %s [-p port] [-d dir] [-h]\n", my_name);
+	printf("  -p Specify a port to serve on (default is 4513)\n");
+	printf("  -d Specify a directory to serve from\n");
 	printf("  -h Display this help and exit\n");
-	printf("-------------------------------------------------\n");
+	printf("-----------------------------------------------------\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -27,7 +29,7 @@ void help(char* my_name) {
  *
  * @return The descriptor of the opened socket
  */
-int setup_server() {
+int setup_server(long port) {
 	int descr; struct sockaddr_in server; unsigned int server_len;
 	
 	/* Open a socket for this server */
@@ -36,7 +38,7 @@ int setup_server() {
 	/* Create the server information */
 	server.sin_family = AF_INET;					// Internet / IP
 	server.sin_addr.s_addr = htonl(INADDR_ANY);		// Accept from any address
-	server.sin_port = htons(DSH_PORT);				// Listen on the predefined dsh port
+	server.sin_port = htons(port);					// Listen on the given port
 	
 	/* Bind the server information to the socket */
 	server_len = sizeof(server);
@@ -44,32 +46,56 @@ int setup_server() {
 	try(listen(descr, MAX_CONNECTIONS));
 	
 	/* If you got here, the server is up and running */
-	info("dsh server activated!");
+	info("dsh server listening on %d", port);
 	
 	return descr;
 }
 
+/**
+ * Dispatch handling of a specific connection to a child process
+ */
+void dispatch() {
+
+}
+
 /** MAIN */
 int main(int argc, char** argv) {
+	srand(time(NULL));
+	
 	// Set up configuration from commandline flags
-	opterr = 0; char opt;
-	while((opt = getopt(argc, argv, "h")) != -1) {
+	opterr = 0; char opt; long port = DSH_PORT; char* directory = getcwd(NULL, 0);
+	while((opt = getopt(argc, argv, "hp:d:")) != -1) {
 		switch(opt) {
 			case 'h': help(argv[0]); break;
-			case '?': warn("Ignoring unrecognized flag");
+			case 'p': port = strtol(optarg, NULL, 10); break;
+			case 'd': directory = optarg; break;
+			case '?': 
+				if(optopt == 'p') err("Must specify a port with -p");
+				else if(optopt == 'd') err("Must specify a port with -d");
+				else warn("Ignoring unrecognized flag -%c", optopt);
+				break;
 		}
 	}
-	
-	int socket_descr = setup_server();
+	int socket_descr = setup_server(port);
 	
 	struct sockaddr_in incoming; int incoming_len = sizeof(incoming);
 	char buffer[BUFF_SIZE];
 	
 	#define EVER	;;
 	for(EVER) {
+		// Spin waiting for connections to the server
 		int accepted_socket = try(accept(socket_descr, (struct sockaddr*) &incoming, (socklen_t*) &incoming_len));
+		
+		// When a connection comes in, go through the auth process
 		try(read(accepted_socket, buffer, BUFF_SIZE));
-		printf("Recieved %s from client!\n", buffer);
+		info("%s wants to connect, authorizing...", buffer);
+		
+		int random_number = htonl(rand() % 100); dbg("Sending %d", random_number);
+		try(send(accepted_socket, &random_number, sizeof(int), 0));
+		
+		char* encrypted = crypt("grader", (char*)&random_number);
+		try(recv(accepted_socket, &buffer, sizeof(buffer), MSG_WAITALL));
+		dbg("%s vs %s", buffer, encrypted);
 	}
 	
 	close(socket_descr);
