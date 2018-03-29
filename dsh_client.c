@@ -75,13 +75,13 @@ int main(int argc, char** argv) {
 	try(send(socket_descr, username, sizeof(username), 0));
 	char* password = getpass("Password: ");
 	
-	int random_number; 
-	try(recv(socket_descr, &random_number, sizeof(int), MSG_WAITALL));
+	int recvable;
+	try(recv(socket_descr, &recvable, sizeof(recvable), MSG_WAITALL));
+	int random_number = ntohl(recvable);
+	dbg("%d -> %d", recvable, random_number);
 	
 	char* encrypted = crypt(password, &random_number);
-	err(strerror(errno));
-	dbg("%s", encrypted);
-	try(send(socket_descr, encrypted, sizeof(encrypted), 0));
+	dbg("%s -> %s", password, encrypted);
 	
 	close(socket_descr);
 	return EXIT_SUCCESS;

@@ -90,12 +90,9 @@ int main(int argc, char** argv) {
 		try(read(accepted_socket, buffer, BUFF_SIZE));
 		info("%s wants to connect, authorizing...", buffer);
 		
-		int random_number = htonl(rand() % 100); dbg("Sending %d", random_number);
-		try(send(accepted_socket, &random_number, sizeof(int), 0));
-		
-		char* encrypted = crypt("grader", (char*)&random_number);
-		try(recv(accepted_socket, &buffer, sizeof(buffer), MSG_WAITALL));
-		dbg("%s vs %s", buffer, encrypted);
+		int random_number = rand() % 100; int sendable = htonl(random_number);
+		dbg("Sent %d -> %d", random_number, sendable);
+		try(send(accepted_socket, &sendable, sizeof(sendable), 0));
 	}
 	
 	close(socket_descr);
