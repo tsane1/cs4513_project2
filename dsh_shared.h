@@ -16,7 +16,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-
+#include <crypt.h>
 #define _XOPEN_SOURCE
 #include <unistd.h>
 

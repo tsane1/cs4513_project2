@@ -12,7 +12,6 @@
 
 #include "dsh_shared.h"
 #include "util.h"
-
 /** Print the help and exit */
 void help(char* my_name) {
 	printf("------------------------ dsh_client ------------------------\n");
@@ -32,21 +31,21 @@ void help(char* my_name) {
  */
 int setup_client(char* host) {
 	int descr; struct sockaddr_in server; unsigned int server_len;
-	
+
 	/* Open a socket for this server */
 	descr = try(socket(PF_INET, SOCK_STREAM, 0));
-	
+
 	/* Create the server information */
 	server.sin_family = AF_INET;						// Internet / IP
 	server.sin_addr.s_addr = inet_addr(host);			// Connect to specified address
 	server.sin_port = htons(DSH_PORT);					// Listen on the predefined dsh port
-	
+
 	/* Connect to the server */
 	server_len = sizeof(server);
 	try(connect(descr, (struct sockaddr*) &server, server_len));
-	
+
 	info("Connected to server on %s", host);
-	
+
 	return descr;
 }
 
@@ -59,7 +58,7 @@ int main(int argc, char** argv) {
 			case 'c': cmd = optarg; break;
 			case 's': host = optarg; break;
 			case 'u': username = optarg; break;
-			case '?': 
+			case '?':
 				if(optopt == 'c') err("Must specify a command with -c");
 				else if(optopt == 's') err("Must specify a host with -s");
 				else if(optopt == 'u') warn("Must specify a username with -u");
@@ -67,22 +66,29 @@ int main(int argc, char** argv) {
 				break;
 		}
 	}
-	
+
 	if(cmd == NULL || host == NULL) err("Must specify both -c and -s options, use -h for help");
 	int socket_descr = setup_client(host);
-	
+
 	// Go through the authorization process
-	try(send(socket_descr, username, sizeof(username), 0));
+	printf("Client\n" );
+	try(send(socket_descr, username, sizeof(char)*100,  MSG_WAITALL));
+	printf("Client\n" );
+	try(send(socket_descr, cmd, sizeof(char)*100,  MSG_WAITALL));
+	printf("Client\n" );
 	char* password = getpass("Password: ");
-	
+
 	int recvable;
 	try(recv(socket_descr, &recvable, sizeof(recvable), MSG_WAITALL));
 	int random_number = ntohl(recvable);
-	dbg("%d -> %d", recvable, random_number);
-	
-	char* encrypted = crypt(password, &random_number);
-	dbg("%s -> %s", password, encrypted);
-	
+	dbg("Recovered%d -> Random %d", recvable, random_number);
+
+	char* randomChar = (char*)malloc(sizeof(char)*10);
+	sprintf(randomChar, "%d", random_number);
+	char* encrypted = crypt(password,randomChar);
+	dbg("%s, %s -> %s", password, randomChar, encrypted);
+
+	try(send(socket_descr, encrypted, sizeof(char)*100, 0));
 	close(socket_descr);
 	return EXIT_SUCCESS;
 }
