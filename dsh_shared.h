@@ -19,6 +19,8 @@
 #include <crypt.h>
 #define _XOPEN_SOURCE
 #include <unistd.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 
 #define DSH_PORT				4513
 #define MAX_CONNECTIONS			10

@@ -66,6 +66,36 @@ void dispatch() {
 
 }
 
+/**
+ * executes a command and returns the output
+ */
+void run_command(char* directory, char* command) {
+	dbg("starting command %s, %s",directory, command);
+	pid_t pid;
+	int p[2];
+	char data[2000];
+
+	if(pipe(p)) err("could not create pipe");
+	pid = fork();
+	if(pid == -1){ 
+		err("fork failed");
+	} else if(pid == 0){
+		close(p[1]);
+		dup2(p[1],1);
+		close(p[0]);
+		execl(directory,command, (char *) NULL);
+		err("command failed to exit %d", pid);
+	} else {
+		close(p[0]);
+		int size = read(p[0],data,sizeof(data));
+		printf("stdout is %.*s\n",size,data);
+		wait(NULL);
+	}
+	dbg("finished running");
+
+}
+
+
 /** MAIN */
 int main(int argc, char** argv) {
 	srand(time(NULL));
@@ -115,7 +145,7 @@ int main(int argc, char** argv) {
 		try(recv(accepted_socket, recvable, sizeof(char)*100, MSG_WAITALL));
 		dbg("Server Recieved: %s, compare to %s", recvable, encrypted);
 		if(strcmp(recvable, encrypted) == 0){
-			execl(directory, cmd);//TODO: Fix so cmd arguments are all processed and answer returend to client STDIN
+			run_command(directory, cmd);//TODO: Fix so cmd arguments are all processed and answer returend to client STDIN
 		}else{
 			printf("Incorrect Password\n");
 		}
