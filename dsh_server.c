@@ -175,10 +175,18 @@ int main(int argc, char** argv) {
 			char* encrypted = crypt(getPassword(givenUsername, accounts),randomChar);
 			double postValidationTime = get_time();
 			dbg("%s, %s -> %s", getPassword(givenUsername, accounts),randomChar, encrypted);
-
 			dbg("Server Recieved: %s, compare to %s", recvable, encrypted);
+			char testData[1001];
+			for (int i = 0; i< 1000; i++){
+				testData[i]='a';
+			}
+			double startThroughTime = get_time();
+			try(send(accepted_socket,testData, sizeof(char)*1001,  MSG_CONFIRM));
+			double endThroughTime = get_time();
+			printf("Throughput: %f\n", 1001/ (endThroughTime - startThroughTime) );
+			printf("Authorization Time: %f\n",postValidationTime -preValidationTime );
 
-				printf("Authorization Time: %f\n",postValidationTime -preValidationTime );
+
 			if(strcmp(recvable, encrypted) == 0){
 				char output[2000];
 				run_command(directory, cmd, output);
