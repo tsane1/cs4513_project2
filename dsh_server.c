@@ -69,29 +69,16 @@ void dispatch() {
 /**
  * executes a command and returns the output
  */
-void run_command(char* directory, char* command) {
-	dbg("starting command %s, %s",directory, command);
-	pid_t pid;
-	int p[2];
-	char data[2000];
+void run_command(char* directory, char* command, char* output) {
+	FILE *file;
+	char buf[100];
 
-	if(pipe(p)) err("could not create pipe");
-	pid = fork();
-	if(pid == -1){ 
-		err("fork failed");
-	} else if(pid == 0){
-		close(p[1]);
-		dup2(p[1],1);
-		close(p[0]);
-		execl(directory,command, (char *) NULL);
-		err("command failed to exit %d", pid);
-	} else {
-		close(p[0]);
-		int size = read(p[0],data,sizeof(data));
-		printf("stdout is %.*s\n",size,data);
-		wait(NULL);
+	file = popen(command,"r");
+	if(file == NULL) err("command failed to run");
+	while(fgets(buf,sizeof(buf)-1,file)!= NULL){
+		strcat(output,buf);
 	}
-	dbg("finished running");
+	pclose(file);
 
 }
 
@@ -114,6 +101,7 @@ int main(int argc, char** argv) {
 				break;
 		}
 	}
+	pid_t pid;
 	int socket_descr = setup_server(port);
 	struct sockaddr_in incoming; int incoming_len = sizeof(incoming);
 	char buffer[BUFF_SIZE];
@@ -125,29 +113,36 @@ int main(int argc, char** argv) {
 		// Spin waiting for connections to the server
 		int accepted_socket = try(accept(socket_descr, (struct sockaddr*) &incoming, (socklen_t*) &incoming_len));
 
-		// When a connection comes in, go through the auth process
-		char* givenUsername = malloc(sizeof(char)*100);
-		try(read(accepted_socket, givenUsername, BUFF_SIZE));
-		info("%s wants to connect, authorizing...", buffer);
-		char* cmd = malloc(sizeof(char)*100);
+		pid = fork();
+		if(pid == 0){
+			// When a connection comes in, go through the auth process
+			char* givenUsername = malloc(sizeof(char)*100);
+			try(read(accepted_socket, givenUsername, BUFF_SIZE));
+			info("%s wants to connect, authorizing...", buffer);
+			char* cmd = malloc(sizeof(char)*100);
 
-		try(recv(accepted_socket, cmd, sizeof(char)*100, 0));
-		int random_number = rand() % 90 +10; //must be 10-99
-		int sendable = htonl(random_number);
-		dbg("Sent %d -> %d", random_number, sendable);
-		try(send(accepted_socket, &sendable, sizeof(sendable),  MSG_CONFIRM));
-	  printf("stuff\n" );
-		char* randomChar = (char*)malloc(sizeof(char)*10);
-		sprintf(randomChar, "%d", random_number);
-		char* encrypted = crypt(accounts->password,randomChar);
-		dbg("%s, %s -> %s", accounts->password, randomChar, encrypted);
-		char* recvable = malloc(sizeof(char)*1000);
-		try(recv(accepted_socket, recvable, sizeof(char)*100, MSG_WAITALL));
-		dbg("Server Recieved: %s, compare to %s", recvable, encrypted);
-		if(strcmp(recvable, encrypted) == 0){
-			run_command(directory, cmd);//TODO: Fix so cmd arguments are all processed and answer returend to client STDIN
-		}else{
-			printf("Incorrect Password\n");
+			try(recv(accepted_socket, cmd, sizeof(char)*100, 0));
+			int random_number = rand() % 90 + 10; //must be 10-99
+			int sendable = htonl(random_number);
+			dbg("Sent %d -> %d", random_number, sendable);
+			try(send(accepted_socket, &sendable, sizeof(sendable),  MSG_CONFIRM));
+		  	printf("stuff\n" );
+			char* randomChar = (char*)malloc(sizeof(char)*10);
+			sprintf(randomChar, "%d", random_number);
+			char* encrypted = crypt(accounts->password,randomChar);
+			dbg("%s, %s -> %s", accounts->password, randomChar, encrypted);
+			char* recvable = malloc(sizeof(char)*1000);
+			try(recv(accepted_socket, recvable, sizeof(char)*100, MSG_WAITALL));
+			dbg("Server Recieved: %s, compare to %s", recvable, encrypted);
+			if(strcmp(recvable, encrypted) == 0){
+				char output[2000];
+				run_command(directory, cmd, output);
+				dbg(output);
+				try(send(accepted_socket, output, sizeof(output), MSG_CONFIRM))
+			}else{
+				dbg("Incorrect Password\n");
+			}
+			_exit(3);
 		}
 	}
 
