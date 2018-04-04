@@ -96,7 +96,8 @@ int main(int argc, char** argv) {
 	try(recv(socket_descr, buff, sizeof(char)*1000, MSG_WAITALL));
 	printf("output: \n%s",buff);
 
-	
+
+
 	close(socket_descr);
 	return EXIT_SUCCESS;
 }

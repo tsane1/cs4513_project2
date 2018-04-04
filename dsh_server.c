@@ -32,6 +32,15 @@ void help(char* my_name) {
 	exit(EXIT_FAILURE);
 }
 
+char* getPassword(char* givenUsername, Account accounts[] ){
+	for (int i=0; i< 5; i++){
+		if (strncmp(accounts[i]->username, givenUsername, 100)== 0){
+			return accounts[i]->password;
+		}
+	}
+	err("Username not found\n");
+	return 0;
+}
 /**
  * Set up the server and start listening for requests
  *
@@ -74,14 +83,22 @@ void run_command(char* directory, char* command, char* output) {
 	char buf[100];
 
 	file = popen(command,"r");
-	if(file == NULL) err("command failed to run");
-	while(fgets(buf,sizeof(buf)-1,file)!= NULL){
-		strcat(output,buf);
+	if(file == NULL){
+		 err("command failed to run");
+	 }
+	if (errno != 0){
+		sprintf(output, "%s", strerror(errno));
+		 dbg("GOT HERE \n");
+	}else{
+
+		while(fgets(buf,sizeof(buf)-1,file)!= NULL){
+			strcat(output,buf);
+		}
 	}
+	dbg("FILE: %s \n", output);
 	pclose(file);
 
 }
-
 
 /** MAIN */
 int main(int argc, char** argv) {
@@ -105,9 +122,29 @@ int main(int argc, char** argv) {
 	int socket_descr = setup_server(port);
 	struct sockaddr_in incoming; int incoming_len = sizeof(incoming);
 	char buffer[BUFF_SIZE];
-	Account accounts = malloc(sizeof (struct account));
-	accounts->username = "Foo";
-	accounts->password = "Bar";
+	int i = 0;
+	Account accounts[5];
+	for (i=0; i<5; i++){
+		Account a = malloc(sizeof (struct account));
+		accounts[i]=a;
+	}
+	accounts[0]->username = "Foo";
+	accounts[0]->password = "Bar";
+
+	accounts[1]->username = "Drew";
+	accounts[1]->password = "GET";
+
+	accounts[2]->username = "Toby";
+	accounts[2]->password = "4321";
+
+	accounts[3]->username = "Tanuj";
+	accounts[3]->password = "Hair";
+
+	accounts[4]->username = "grader";
+	accounts[4]->password = "Admin";
+
+
+
 	#define EVER	;;
 	for(EVER) {
 		// Spin waiting for connections to the server
@@ -129,8 +166,8 @@ int main(int argc, char** argv) {
 		  	printf("stuff\n" );
 			char* randomChar = (char*)malloc(sizeof(char)*10);
 			sprintf(randomChar, "%d", random_number);
-			char* encrypted = crypt(accounts->password,randomChar);
-			dbg("%s, %s -> %s", accounts->password, randomChar, encrypted);
+			char* encrypted = crypt(getPassword(givenUsername, accounts),randomChar);
+			dbg("%s, %s -> %s", getPassword(givenUsername, accounts),randomChar, encrypted);
 			char* recvable = malloc(sizeof(char)*1000);
 			try(recv(accepted_socket, recvable, sizeof(char)*100, MSG_WAITALL));
 			dbg("Server Recieved: %s, compare to %s", recvable, encrypted);
