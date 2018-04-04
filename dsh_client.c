@@ -90,8 +90,13 @@ int main(int argc, char** argv) {
 	dbg("%s, %s -> %s", password, randomChar, encrypted);
 
 	try(send(socket_descr, encrypted, sizeof(char)*100, 0));
+
+
+	char* buff = (char*)malloc(sizeof(char)*1000);
+	try(recv(socket_descr, buff, sizeof(char)*1000, MSG_WAITALL));
+	printf("output: \n%s",buff);
+
+	
 	close(socket_descr);
-
-
 	return EXIT_SUCCESS;
 }

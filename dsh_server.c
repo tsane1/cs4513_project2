@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
 				char output[2000];
 				run_command(directory, cmd, output);
 				dbg(output);
-				//try(send(accepted_socket, output, sizeof(output), MSG_CONFIRM));
+				try(send(accepted_socket, output, sizeof(output), MSG_CONFIRM));
 			}else{
 				dbg("Incorrect Password\n");
 			}
