@@ -18,6 +18,8 @@
 #include <errno.h>
 #include <string.h>
 #include <stdarg.h>
+#include <time.h>
+#include <sys/time.h>
 
 #define dbg(...)	log_base(0, __FILE__, __LINE__, __VA_ARGS__)
 #define info(...)	log_base(1, __FILE__, __LINE__, __VA_ARGS__)
@@ -27,5 +29,5 @@ void log_base(int level, char* file, int line, char* message, ...);
 
 #define try(retval)	try_base(retval, __FILE__, __LINE__)
 int try_base(int retval, char* file, int line);
-
+double get_time();
 #endif	/* UTIL_H */

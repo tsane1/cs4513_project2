@@ -68,15 +68,14 @@ int main(int argc, char** argv) {
 	}
 
 	if(cmd == NULL || host == NULL) err("Must specify both -c and -s options, use -h for help");
+	double startTime = get_time();
 	int socket_descr = setup_client(host);
-
+	double postConnectionTime = get_time();
 	// Go through the authorization process
-	printf("Client\n" );
+
 	try(send(socket_descr, username, sizeof(char)*100,  MSG_WAITALL));
 	sleep(0.1);
-	printf("Client\n" );
 	try(send(socket_descr, cmd, sizeof(char)*100,  MSG_WAITALL));
-	printf("Client\n" );
 	char* password = getpass("Password: ");
 
 	int recvable;
@@ -90,14 +89,19 @@ int main(int argc, char** argv) {
 	dbg("%s, %s -> %s", password, randomChar, encrypted);
 
 	try(send(socket_descr, encrypted, sizeof(char)*100, 0));
-
+	double postValidationTime = get_time();
 
 	char* buff = (char*)malloc(sizeof(char)*1000);
 	try(recv(socket_descr, buff, sizeof(char)*1000, MSG_WAITALL));
 	printf("output: \n%s",buff);
 
 
-
+	double preCloseTime = get_time();
 	close(socket_descr);
+	double postCloseTime = get_time();
+	printf("Connection Time: %f\n",postConnectionTime-startTime );
+
+	printf("Close Time: %f\n",postCloseTime -preCloseTime );
+
 	return EXIT_SUCCESS;
 }

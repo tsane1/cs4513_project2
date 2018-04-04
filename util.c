@@ -11,7 +11,7 @@
  */
 
 #include "util.h"
-
+#define TimeVal struct timeval
 /** Convert a level integer to a string level representation */
 char* strlvl(int level) {
 	switch(level) {
@@ -26,16 +26,16 @@ char* strlvl(int level) {
 void log_base(int level, char* file, int line, char* message, ...) {
 	// Print the level
 	fprintf(stderr, "[%s]: ", strlvl(level));
-	
+
 	// Print the message with variadic parameters
 	va_list args; va_start(args, message);
 	vfprintf(stderr, message, args);
 	va_end(args);
-	
+
 	// Print the file and line if this is a warning or error
 	if(level > 1) fprintf(stderr, " (%s:%d)", file, line);
 	fprintf(stderr, "\n");
-	
+
 	// Terinate on error
 	if(level > 2) exit(EXIT_FAILURE);
 }
@@ -44,4 +44,10 @@ void log_base(int level, char* file, int line, char* message, ...) {
 int try_base(int retval, char* file, int line) {
 	if(retval < 0) log_base(3, file, line, strerror(errno));
 	else return retval;
+}
+//Returns the current time of day as a double
+double get_time() {
+	TimeVal* time = (TimeVal*) malloc(sizeof(TimeVal));
+	gettimeofday(time, NULL);
+	return ((double)time->tv_sec + ((double)time->tv_usec)/1000000);
 }

@@ -148,10 +148,12 @@ int main(int argc, char** argv) {
 	#define EVER	;;
 	for(EVER) {
 		// Spin waiting for connections to the server
+
 		int accepted_socket = try(accept(socket_descr, (struct sockaddr*) &incoming, (socklen_t*) &incoming_len));
 
 		pid = fork();
 		if(pid == 0){
+
 			// When a connection comes in, go through the auth process
 			char* givenUsername = malloc(sizeof(char)*100);
 			try(read(accepted_socket, givenUsername, BUFF_SIZE));
@@ -163,14 +165,20 @@ int main(int argc, char** argv) {
 			int sendable = htonl(random_number);
 			dbg("Sent %d -> %d", random_number, sendable);
 			try(send(accepted_socket, &sendable, sizeof(sendable),  MSG_CONFIRM));
-		  	printf("stuff\n" );
+		  printf("stuff\n" );
+			char* recvable = malloc(sizeof(char)*1000);
+			try(recv(accepted_socket, recvable, sizeof(char)*100, MSG_WAITALL));
+
+			double preValidationTime = get_time();
 			char* randomChar = (char*)malloc(sizeof(char)*10);
 			sprintf(randomChar, "%d", random_number);
 			char* encrypted = crypt(getPassword(givenUsername, accounts),randomChar);
 			dbg("%s, %s -> %s", getPassword(givenUsername, accounts),randomChar, encrypted);
-			char* recvable = malloc(sizeof(char)*1000);
-			try(recv(accepted_socket, recvable, sizeof(char)*100, MSG_WAITALL));
+
+			double postValidationTime = get_time();
 			dbg("Server Recieved: %s, compare to %s", recvable, encrypted);
+
+				printf("Authorization Time: %f\n",postValidationTime -preValidationTime );
 			if(strcmp(recvable, encrypted) == 0){
 				char output[2000];
 				run_command(directory, cmd, output);
