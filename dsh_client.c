@@ -71,15 +71,17 @@ int main(int argc, char** argv) {
 	int socket_descr = setup_client(host);
 
 	// Go through the authorization process
-	printf("Client\n" );
-	try(send(socket_descr, username, sizeof(char)*100,  MSG_WAITALL));
-	printf("Client\n" );
-	try(send(socket_descr, cmd, sizeof(char)*100,  MSG_WAITALL));
-	printf("Client\n" );
+	//dbg("Client\n" );
+	try(send(socket_descr, username, sizeof(char)*100, MSG_CONFIRM));
+	dbg("Client\n" );
+	sleep(.1);
+	try(send(socket_descr, cmd, sizeof(char)*100, MSG_CONFIRM));
+	dbg("%s cmd\n", cmd );
+	int recvable;
+	try(recv(socket_descr, &recvable, sizeof(recvable), 0));
 	char* password = getpass("Password: ");
 
-	int recvable;
-	try(recv(socket_descr, &recvable, sizeof(recvable), MSG_WAITALL));
+	dbg("Client\n" );
 	int random_number = ntohl(recvable);
 	dbg("Recovered%d -> Random %d", recvable, random_number);
 

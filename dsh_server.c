@@ -77,18 +77,19 @@ void run_command(char* directory, char* command) {
 
 	if(pipe(p)) err("could not create pipe");
 	pid = fork();
-	if(pid == -1){ 
+	if(pid == -1){
 		err("fork failed");
 	} else if(pid == 0){
 		close(p[1]);
 		dup2(p[1],1);
 		close(p[0]);
 		execl(directory,command, (char *) NULL);
-		err("command failed to exit %d", pid);
-	} else {
 		close(p[0]);
 		int size = read(p[0],data,sizeof(data));
-		printf("stdout is %.*s\n",size,data);
+		printf("stdout is %s\n",data);
+		err("command failed to exit %d", pid);
+	} else {
+
 		wait(NULL);
 	}
 	dbg("finished running");
@@ -128,10 +129,12 @@ int main(int argc, char** argv) {
 		// When a connection comes in, go through the auth process
 		char* givenUsername = malloc(sizeof(char)*100);
 		try(read(accepted_socket, givenUsername, BUFF_SIZE));
-		info("%s wants to connect, authorizing...", buffer);
+		info("%s wants to connect, authorizing...", givenUsername);
 		char* cmd = malloc(sizeof(char)*100);
-
 		try(recv(accepted_socket, cmd, sizeof(char)*100, 0));
+
+		dbg("%s CMD\n", cmd);
+;
 		int random_number = rand() % 90 +10; //must be 10-99
 		int sendable = htonl(random_number);
 		dbg("Sent %d -> %d", random_number, sendable);
