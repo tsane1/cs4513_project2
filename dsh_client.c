@@ -73,6 +73,7 @@ int main(int argc, char** argv) {
 	// Go through the authorization process
 	printf("Client\n" );
 	try(send(socket_descr, username, sizeof(char)*100,  MSG_WAITALL));
+	sleep(0.1);
 	printf("Client\n" );
 	try(send(socket_descr, cmd, sizeof(char)*100,  MSG_WAITALL));
 	printf("Client\n" );
@@ -91,6 +92,6 @@ int main(int argc, char** argv) {
 	try(send(socket_descr, encrypted, sizeof(char)*100, 0));
 	close(socket_descr);
 
-	
+
 	return EXIT_SUCCESS;
 }
