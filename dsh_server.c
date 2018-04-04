@@ -173,9 +173,9 @@ int main(int argc, char** argv) {
 			char* randomChar = (char*)malloc(sizeof(char)*10);
 			sprintf(randomChar, "%d", random_number);
 			char* encrypted = crypt(getPassword(givenUsername, accounts),randomChar);
+			double postValidationTime = get_time();
 			dbg("%s, %s -> %s", getPassword(givenUsername, accounts),randomChar, encrypted);
 
-			double postValidationTime = get_time();
 			dbg("Server Recieved: %s, compare to %s", recvable, encrypted);
 
 				printf("Authorization Time: %f\n",postValidationTime -preValidationTime );
