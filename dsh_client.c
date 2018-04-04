@@ -90,5 +90,7 @@ int main(int argc, char** argv) {
 
 	try(send(socket_descr, encrypted, sizeof(char)*100, 0));
 	close(socket_descr);
+
+	
 	return EXIT_SUCCESS;
 }
